@@ -100,45 +100,84 @@ def create_db(schema_path, db_path):
         schema_path (str): Path to the SQL schema file.
         db_path (str): Path where the SQLite database will be created.
     """
+    conn = None
+    try:
+        # Create a connection
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
 
-    # Create a connection
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+        # Read the SQL schema file
+        with open(schema_path, "r") as f:
+            schema_sql = f.read()
 
-    # Read the SQL schema file
-    with open(schema_path, 'r') as f:
-        schema_sql = f.read()
+        # Execute the schema SQL
+        cursor.executescript(schema_sql)
 
-    # Execute the schema SQL
-    cursor.executescript(schema_sql)
+        # Commit changes
+        conn.commit()
 
-    # Commit and close the connection
-    conn.commit()
-    conn.close()
-
+    except FileNotFoundError as e:
+        print(f"Schema file not found: {e}")
+        raise
+    except PermissionError as e:
+        print(f"Permission denied: {e}")
+        raise
+    except OSError as e:
+        # Covers other I/O related errors when opening/reading the schema file
+        print(f"OS error while accessing schema file: {e}")
+        raise
+    except sqlite3.Error as e:
+        print(f"SQLite error: {e}")
+        raise
+    finally:
+        if conn is not None:
+            try:
+                conn.close()
+            except sqlite3.Error as e:
+                print(f"Error closing database connection: {e}")
 
 # Activity 4.7 add exception handling to this function
 def describe(file_path):
     """Uses pandas DataFrame functions to describe the data.
 
-    Applies the following pandas functions to the DataFrame and prints the output to file instead of terminal:
+    Applies the following pandas functions to the DataFrame and
+    prints the output to file instead of terminal:
         df.shape
         df.head(num)
-    NB some functions removed to shorten the output for the exception handling activity!
 
-       Args:
-           file_path: The path to the .csv file.
+    NB: some functions removed to shorten the output for the
+    exception handling activity.
 
-        Raises:
-            FileNotFoundError: If the file does not exist.
+    Args:
+        file_path: The path to the .csv file.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
 
     """
-    df = pd.read_csv(file_path)
-
-    # 2.3 Describe
-    pd.set_option("display.max_columns", None)  # Change the pandas display options to print all columns
-    print("\nThe number of rows and columns\n", df.shape)
-    print("\nThe first 5 rows\n", df.head(5))
+    try:
+        df = pd.read_csv(file_path)
+    except FileNotFoundError as e:
+        print(f"CSV file not found: {e}")
+        raise
+    except PermissionError as e:
+        print(f"Permission denied when accessing CSV: {e}")
+        raise
+    except pd.errors.EmptyDataError as e:
+        print(f"No data in CSV file: {e}")
+        raise
+    except pd.errors.ParserError as e:
+        print(f"Parsing error while reading CSV: {e}")
+        raise
+    except OSError as e:
+        # Catch other I/O related errors (e.g. bad path, encoding issues)
+        print(f"OS error while reading CSV: {e}")
+        raise
+    else:
+        # 2.3 Describe
+        pd.set_option("display.max_columns", None)  # Change pandas display to show all columns
+        print("\nThe number of rows and columns\n", df.shape)
+        print("\nThe first 5 rows\n", df.head(5))
 
 
 if __name__ == '__main__':
