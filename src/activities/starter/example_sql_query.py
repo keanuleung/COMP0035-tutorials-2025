@@ -1,7 +1,5 @@
 import sqlite3
-from importlib import resources
-
-from activities import data
+from pathlib import Path
 
 
 def sample_select_queries(db_path):
@@ -31,7 +29,10 @@ def sample_select_queries(db_path):
 
 def main():
     db_path = resources.files(data).joinpath("sample.db")
-    sample_select_queries(db_path)
+def main():
+    # locate the sample.db file relative to this script: go up to the activities package and into the data folder
+    db_path = Path(__file__).resolve().parents[1].joinpath("data", "sample.db")
+    sample_select_queries(str(db_path))
 
 
 if __name__ == "__main__":
